@@ -1,10 +1,12 @@
 [![Build Status](https://github.com/openjavaformat/fmt-maven-plugin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/openjavaformat/fmt-maven-plugin/actions/workflows/ci.yml?query=branch%3Amain)
 [![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/openjavaformat/fmt-maven-plugin/blob/main/LICENSE)
-[![Maven Central](https://img.shields.io/maven-central/v/dev.openjavaformat/fmt-maven-plugin)](https://central.sonatype.com/artifact/dev.openjavaformat/fmt-maven-plugin)
+[![Maven Central](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fdev%2Fopenjavaformat%2Ffmt-maven-plugin%2Fmaven-metadata.xml&label=Maven%20Central)](https://central.sonatype.com/artifact/dev.openjavaformat/fmt-maven-plugin)
 
 ## fmt-maven-plugin 
 
 Formats your code using [open-java-format](https://openjavaformat.dev), a modern, lambda-friendly, 120-character Java formatter.
+
+**Documentation: [openjavaformat.dev/get-started/maven](https://openjavaformat.dev/get-started/maven/)**
 
 This is a fork of [spotify/fmt-maven-plugin](https://github.com/spotify/fmt-maven-plugin), which formats with google-java-format. It works the same way, with open-java-format in its place.
 
@@ -24,7 +26,7 @@ To have your sources automatically formatted on each build, add to your pom.xml:
             <plugin>
                 <groupId>dev.openjavaformat</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
-                <version>VERSION</version>
+                <version>2.27.0.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -36,7 +38,7 @@ To have your sources automatically formatted on each build, add to your pom.xml:
                     <dependency>
                         <groupId>dev.openjavaformat</groupId>
                         <artifactId>open-java-format</artifactId>
-                        <version>2.98.0.3</version>
+                        <version>2.98.0.4</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -54,7 +56,7 @@ If you prefer, you can only check formatting at build time using the `check` goa
             <plugin>
                 <groupId>dev.openjavaformat</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
-                <version>VERSION</version>
+                <version>2.27.0.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -66,7 +68,7 @@ If you prefer, you can only check formatting at build time using the `check` goa
                     <dependency>
                         <groupId>dev.openjavaformat</groupId>
                         <artifactId>open-java-format</artifactId>
-                        <version>2.98.0.3</version>
+                        <version>2.98.0.4</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -138,7 +140,7 @@ example:
         <plugin>
             <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
-            <version>VERSION</version>
+            <version>2.27.0.1</version>
             <configuration>
                 <sourceDirectory>some/source/directory</sourceDirectory>
                 <testSourceDirectory>some/test/directory</testSourceDirectory>
@@ -182,7 +184,7 @@ example to not display the non-compliant files:
         <plugin>
             <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
-            <version>VERSION</version>
+            <version>2.27.0.1</version>
             <configuration>
                 <displayFiles>false</displayFiles>
             </configuration>
@@ -205,7 +207,7 @@ example to limit the display up to 10 files
         <plugin>
             <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
-            <version>VERSION</version>
+            <version>2.27.0.1</version>
             <configuration>
                 <displayLimit>10</displayLimit>
             </configuration>
@@ -228,7 +230,7 @@ example to only warn about non-compliant files instead of failing the build
         <plugin>
             <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
-            <version>VERSION</version>
+            <version>2.27.0.1</version>
             <configuration>
                 <failOnError>false</failOnError>
             </configuration>
@@ -259,7 +261,7 @@ You can pass parameters via standard `-D` syntax.
 
 ### Requirements
 
-The plugin needs Maven 3.9.6 or newer, running on JDK 21 or newer: open-java-format is compiled for Java 21, and the plugin formats in a JVM started from the same JDK.
+Maven has to run on JDK 21 or newer: open-java-format is compiled for Java 21, and the plugin formats in a JVM started from the same JDK.
 
 ### Building
 
