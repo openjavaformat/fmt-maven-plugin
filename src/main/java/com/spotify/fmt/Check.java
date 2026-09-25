@@ -72,7 +72,7 @@ public class Check extends AbstractFMT {
               + (failOnError ? ", failing build" : "");
       messageConsumer.accept(message);
       messageConsumer.accept(
-          "To fix formatting errors, run \"mvn com.spotify.fmt:fmt-maven-plugin:format\"");
+          "To fix formatting errors, run \"mvn dev.openjavaformat:fmt-maven-plugin:format\"");
       // do not support limit < 1
       displayLimit = max(1, displayLimit);
 

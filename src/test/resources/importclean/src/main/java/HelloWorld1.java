@@ -9,17 +9,17 @@ import javax.annotations.Nullable;
 
 public class HelloWorld1 {
 
-  <T> void check(@Nullable List<T> x) {
-    Preconditions.checkNodeNull(x);
-  }
-
-  void f() {
-    List<String> xs = null;
-    assertThat(xs).isNull();
-    try {
-      check(xs);
-      fail();
-    } catch (NullPointerException e) {
+    <T> void check(@Nullable List<T> x) {
+        Preconditions.checkNodeNull(x);
     }
-  }
+
+    void f() {
+        List<String> xs = null;
+        assertThat(xs).isNull();
+        try {
+            check(xs);
+            fail();
+        } catch (NullPointerException e) {
+        }
+    }
 }

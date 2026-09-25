@@ -1,0 +1,69 @@
+# Development tooling for fmt-maven-plugin.
+#
+[tools]
+java = "temurin-21"
+
+# ---- GitHub Actions secrets ----
+# Read from 1Password at apply time; nothing secret is stored in the repo. Requires gh
+# (authenticated with admin on this repository) and the 1Password CLI (`op signin` first).
+
+[tasks."gh:secrets"]
+description = "Set the repository's Actions and Dependabot secrets from 1Password (op)"
+shell = "bash -c"
+quiet = true                 # suppress mise's `[task] $ <first line>` command echo
+env = { NO_COLOR = "1" }     # suppress gh's OSC-11 terminal-background probe
+run = """
+set -euo pipefail
+
+# BOT_PAT is consumed by update-pr-branch.yml and by the auto-merge step of
+# dependabot-automerge.yml, and it cannot be GITHUB_TOKEN: a push made with GITHUB_TOKEN starts no
+# workflow runs, so a branch would be brought up to date — or a pull request merged — and then
+# never re-checked.
+#
+# The token needs these repository permissions:
+#   Pull requests  Write   PUT /repos/{owner}/{repo}/pulls/{n}/update-branch requires it
+#   Contents       Write   pushing the updated branch and the merge commit
+#
+# It is written to BOTH secret stores. A run triggered by a Dependabot event cannot read Actions
+# secrets at all — it reads the Dependabot store instead — so a token present only in Actions
+# expands to an empty string there, and gh fails with "set the GH_TOKEN environment variable".
+#
+# --repo, because a fork's checkout usually has an upstream remote next to origin, and gh refuses
+# to guess.
+repo="$(git remote get-url origin | sed -E 's#(git@github\\.com:|https://github\\.com/)##; s#\\.git$##')"
+
+apply() {
+  # Third argument: which secret stores to write to. A plain string rather than a bash array: mise
+  # renders this script through Tera first, and the array-length syntax — a dollar, a brace and a hash —
+  # opens a Tera comment that is never closed, so the whole task fails to render.
+  local name="$1" ref="$2" stores="${3:-actions dependabot}" value
+  if [[ "$ref" == *TODO* ]]; then
+    echo "– $name: op reference still contains TODO, skipping"; return
+  fi
+  if ! value="$(op read "$ref" 2>/dev/null)"; then
+    echo "✗ $name: cannot read $ref" >&2
+    echo "  Create that item in 1Password (or point the reference at an existing one), then re-run." >&2
+    return 1
+  fi
+  # An op field that exists but was never filled reads as empty, and gh would happily store that: a
+  # blank token or signing key only surfaces much later, as a confusing failure mid-release.
+  if [[ -z "$value" ]]; then
+    echo "✗ $name: $ref is empty — fill it in 1Password first" >&2
+    return 1
+  fi
+  for store in $stores; do
+    gh secret set "$name" --app "$store" --repo "$repo" --body "$value"
+    echo "✓ $name set ($store)"
+  done
+}
+
+apply BOT_PAT 'op://Private/open-java-format/GitHub/BOT_PAT'
+
+# What .github/workflows/release.yml signs and publishes with: the Central Portal token and the signing
+# key, the same ones open-java-format itself is released with. Actions only: a Dependabot run never
+# releases, and the signing key has no business being readable from one.
+apply JRELEASER_MAVENCENTRAL_USERNAME 'op://Private/open-java-format/GitHub/JRELEASER_MAVENCENTRAL_USERNAME' actions
+apply JRELEASER_MAVENCENTRAL_PASSWORD 'op://Private/open-java-format/GitHub/JRELEASER_MAVENCENTRAL_PASSWORD' actions
+apply JRELEASER_GPG_SECRET_KEY 'op://Private/open-java-format/GitHub/JRELEASER_GPG_SECRET_KEY' actions
+apply JRELEASER_GPG_PASSPHRASE 'op://Private/open-java-format/GitHub/JRELEASER_GPG_PASSPHRASE' actions
+"""

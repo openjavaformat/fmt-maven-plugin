@@ -1,0 +1,43 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ 'main' ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ 'main' ]
+  schedule:
+    - cron: '33 9 * * 6'
+
+jobs:
+  analyze:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # Initializes the CodeQL tools for scanning.
+      # Must run AFTER setup-java so CodeQL hooks into the correct JDK.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4
+        with:
+          languages: 'java'
+
+      - name: Build main and test sources for CodeQL
+        run: mvn --no-transfer-progress -B clean test-compile
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4

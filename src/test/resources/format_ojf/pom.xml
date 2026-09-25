@@ -9,15 +9,6 @@
     <packaging>jar</packaging>
     <name>Test MyMojo</name>
 
-    <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -31,16 +22,6 @@
                         <version>@open-java-format.version@</version>
                     </dependency>
                 </dependencies>
-                <configuration>
-                    <filesPathPattern>^((?!\Wignored\W).)*\.java$</filesPathPattern>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

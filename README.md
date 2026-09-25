@@ -1,16 +1,16 @@
-[![Build Status](https://github.com/spotify/fmt-maven-plugin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/spotify/fmt-maven-plugin/actions/workflows/ci.yml?query=branch%3Amain)
-[![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/spotify/fmt-maven-plugin/blob/main/LICENSE)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.spotify.fmt/fmt-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.spotify.fmt/fmt-maven-plugin)
+[![Build Status](https://github.com/openjavaformat/fmt-maven-plugin/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/openjavaformat/fmt-maven-plugin/actions/workflows/ci.yml?query=branch%3Amain)
+[![license](http://img.shields.io/badge/license-MIT-brightgreen.svg)](https://github.com/openjavaformat/fmt-maven-plugin/blob/main/LICENSE)
+[![Maven Central](https://img.shields.io/maven-central/v/dev.openjavaformat/fmt-maven-plugin)](https://central.sonatype.com/artifact/dev.openjavaformat/fmt-maven-plugin)
 
 ## fmt-maven-plugin 
 
-**UPDATE 2022-02-14:** This plugin has moved from [coveooss](https://github.com/coveooss/) to the [spotify](https://github.com/spotify/) Github org. The new groupId will be `com.spotify.fmt`, and the `master` branch has been renamed to `main`.
+Formats your code using [open-java-format](https://openjavaformat.dev), a modern, lambda-friendly, 120-character Java formatter.
 
-Formats your code using [google-java-format](https://github.com/google/google-java-format) which follows [Google's code styleguide](https://google.github.io/styleguide/javaguide.html).
+This is a fork of [spotify/fmt-maven-plugin](https://github.com/spotify/fmt-maven-plugin), which formats with google-java-format. It works the same way, with open-java-format in its place.
 
 The format cannot be configured by design.
 
-If you want your IDE to stick to the same format, google-java-format also includes integrations for IntelliJ and Eclipse IDE's, following the installation instructions on the [README](https://github.com/google/google-java-format/blob/master/README.md#using-the-formatter).
+If you want your IDE to stick to the same format, open-java-format also has plugins for [IntelliJ IDEA](https://openjavaformat.dev/get-started/intellij-idea/) and [Eclipse](https://openjavaformat.dev/get-started/eclipse/).
 
 ## Usage
 
@@ -22,7 +22,7 @@ To have your sources automatically formatted on each build, add to your pom.xml:
     <build>
         <plugins>
             <plugin>
-                <groupId>com.spotify.fmt</groupId>
+                <groupId>dev.openjavaformat</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
                 <version>VERSION</version>
                 <executions>
@@ -34,9 +34,9 @@ To have your sources automatically formatted on each build, add to your pom.xml:
                 </executions>
                 <dependencies>
                     <dependency>
-                        <groupId>com.google.googlejavaformat</groupId>
-                        <artifactId>google-java-format</artifactId>
-                        <version>1.27.0</version>
+                        <groupId>dev.openjavaformat</groupId>
+                        <artifactId>open-java-format</artifactId>
+                        <version>2.98.0.3</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -44,10 +44,7 @@ To have your sources automatically formatted on each build, add to your pom.xml:
     </build>
 ```
 
-The inclusion of the `google-java-format` as a dependency allows you to control that version,
-which is generally recommended, so that you can align it with the exact version used in your
-IDE, pre-commit Git hook, etc. (If you are fine getting "whatever version `fmt-maven-plugin`
-uses" then you could omit it.)
+The `open-java-format` dependency is required. The plugin does not bring a formatter of its own, so it formats with exactly the version you name here: align it with the version in your IDE, pre-commit Git hook, etc. Without it the build stops with a message that says which dependency to add.
 
 If you prefer, you can only check formatting at build time using the `check` goal:
 
@@ -55,7 +52,7 @@ If you prefer, you can only check formatting at build time using the `check` goa
     <build>
         <plugins>
             <plugin>
-                <groupId>com.spotify.fmt</groupId>
+                <groupId>dev.openjavaformat</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
                 <version>VERSION</version>
                 <executions>
@@ -65,10 +62,19 @@ If you prefer, you can only check formatting at build time using the `check` goa
                         </goals>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>dev.openjavaformat</groupId>
+                        <artifactId>open-java-format</artifactId>
+                        <version>2.98.0.3</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
 ```
+
+The examples below leave the `<dependencies>` element out to stay short, but every configuration needs it.
 
 #### Overriding the Default Lifecycle Phase
 
@@ -93,6 +99,10 @@ For example, you may prefer that the `check` goal is performed in an earlier pha
                     </execution>
 ```
 
+### What gets formatted
+
+Every file is formatted the way open-java-format's other integrations format it: the code is laid out, imports are sorted, unused imports are removed and long strings are reflowed. The `style`, `skipSortingImports`, `skipRemovingUnusedImports` and `skipReflowingLongStrings` options of spotify/fmt-maven-plugin do not exist here.
+
 ### Options
 
 `sourceDirectory` represents the directory where your Java sources that need to be formatted are contained. It defaults to `${project.build.sourceDirectory}`
@@ -107,26 +117,26 @@ For example, you may prefer that the `check` goal is performed in an earlier pha
 
 `skip` is whether the plugin should skip the operation.
 
-`skipReflowingLongStrings` is whether the plugin should skip reflowing long strings. It defaults to `true`.
-
-`skipRemovingUnusedImports` is whether the plugin should skip removing unused imports. It defaults to `false`.
-
-`skipSortingImports` is whether the plugin should skip sorting imports.
-
 `skipSourceDirectory` is whether the plugin should skip formatting/checking the `sourceDirectory`. It defaults to `false`.
 
 `skipTestSourceDirectory` is whether the plugin should skip formatting/checking the `testSourceDirectory`. It defaults to `false`.
 
-`style` sets the formatter style to be `google` or `aosp`. By default this is `google`. Projects using Android conventions may prefer `aosp`.
+`forkMode` lets you specify whether to run open-java-format in a fork or in-process. Also adds JVM arguments to expose JDK internal javac APIs. Value `default` (which is the default) will fork (to be able to run at all on JDK 16+), `never` runs in-process, regardless of JDK version and `always` will always fork. In-process formatting needs the javac exports in `.mvn/jvm.config`:
 
-`forkMode` lets you specify whether to run google-java-format in a fork or in-process. Also adds JVM arguments to expose JDK internal javac APIs. Value `default` (which is the default) will fork (to avoid warnings for JDK9+ and to be able to run at all for JDK16+), `never` runs in-process, regardless of JDK version and `always` will always fork.
+```
+--add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+--add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+--add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+--add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+--add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+```
 
 example:
 ```xml
 <build>
     <plugins>
         <plugin>
-            <groupId>com.spotify.fmt</groupId>
+            <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
             <version>VERSION</version>
             <configuration>
@@ -141,10 +151,6 @@ example:
                 <skip>false</skip>
                 <skipSourceDirectory>false</skipSourceDirectory>
                 <skipTestSourceDirectory>false</skipTestSourceDirectory>
-                <skipSortingImports>false</skipSortingImports>
-                <skipRemovingUnusedImports>false</skipRemovingUnusedImports>
-                <skipReflowingLongStrings>true</skipReflowingLongStrings>
-                <style>google</style>
             </configuration>
             <executions>
                 <execution>
@@ -174,7 +180,7 @@ example to not display the non-compliant files:
 <build>
     <plugins>
         <plugin>
-            <groupId>com.spotify.fmt</groupId>
+            <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
             <version>VERSION</version>
             <configuration>
@@ -197,7 +203,7 @@ example to limit the display up to 10 files
 <build>
     <plugins>
         <plugin>
-            <groupId>com.spotify.fmt</groupId>
+            <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
             <version>VERSION</version>
             <configuration>
@@ -220,7 +226,7 @@ example to only warn about non-compliant files instead of failing the build
 <build>
     <plugins>
         <plugin>
-            <groupId>com.spotify.fmt</groupId>
+            <groupId>dev.openjavaformat</groupId>
             <artifactId>fmt-maven-plugin</artifactId>
             <version>VERSION</version>
             <configuration>
@@ -242,24 +248,27 @@ example to only warn about non-compliant files instead of failing the build
 
 You can also use it on the command line
 
-`mvn com.spotify.fmt:fmt-maven-plugin:format`
+`mvn dev.openjavaformat:fmt-maven-plugin:format`
+
+The plugin still has to be declared in your pom.xml with its `open-java-format` dependency: Maven takes a plugin's dependencies from the pom.xml, the command line cannot name them.
 
 You can pass parameters via standard `-D` syntax.
-`mvn com.spotify.fmt:fmt-maven-plugin:format -Dverbose=true`
+`mvn dev.openjavaformat:fmt-maven-plugin:format -Dverbose=true`
 
 `-Dfmt.skip` is whether the plugin should skip the operation.
 
-### Using with Java 8
+### Requirements
 
-Starting from version 1.8, Google Java Formatter requires Java 11 to run. Incidently, all versions of this plugin starting from 2.10 inclusively also require this Java version to properly function. The 2.9.x release branch is the most up-to-date version that still runs on Java 8.
+The plugin needs Maven 3.9.6 or newer, running on JDK 21 or newer: open-java-format is compiled for Java 21, and the plugin formats in a JVM started from the same JDK.
 
-### Deploy
+### Building
 
-- `git checkout main && git pull`
-- `mvn release:prepare` - use x.y format for release version and x.y.z for SCM tag. (You can only do this as admin of the repo)
-- `mvn release:perform -P release` (make sure to use Maven settings which include credentials for the Sonatype staging repo)
-- `git fetch` - to make sure your local repo is up to date with the commits from the release plugin.
-- Create a GitHub release with merged PRs and other information.
-- Check that the release is available in [Sonatype staging](https://oss.sonatype.org/#nexus-search;quick~com.spotify.fmt)
-- Wait for the release to be available in [Maven Central](https://repo1.maven.org/maven2/com/spotify/fmt/fmt-maven-plugin/)
-- Update version used for actual formatting in the POM.
+`mvn verify` on JDK 21 runs the unit tests and the integration tests, the projects in `src/test/resources`.
+
+### Releasing
+
+A tag is a release: pushing a four-number tag, `X.Y.Z.N`, makes [release.yml](.github/workflows/release.yml) build that version, sign it and publish it to Maven Central. The repository secrets it needs come from 1Password with `mise run gh:secrets`.
+
+## License
+
+MIT, see [LICENSE](LICENSE). The plugin was written at Coveo and Spotify, and this fork keeps their copyright notices. Neither Spotify AB nor Coveo endorses, sponsors or is affiliated with this fork.

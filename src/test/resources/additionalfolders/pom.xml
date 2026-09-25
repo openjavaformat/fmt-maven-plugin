@@ -21,9 +21,16 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>com.spotify.fmt</groupId>
+                <groupId>dev.openjavaformat</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
-                <version>2.12</version>
+                <version>@project.version@</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>dev.openjavaformat</groupId>
+                        <artifactId>open-java-format</artifactId>
+                        <version>@open-java-format.version@</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <additionalSourceDirectories>
                         <directory>${project.basedir}/src/additionalfolder</directory>

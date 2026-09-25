@@ -26,27 +26,30 @@
 
 package com.spotify.fmt;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.List;
+import static com.google.common.truth.Truth.assertThat;
 
-interface FormattingConfiguration extends Serializable {
+import java.net.URL;
+import java.net.URLClassLoader;
+import org.junit.Test;
 
-  boolean debug();
+public class OpenJavaFormatTest {
 
-  List<File> directoriesToFormat();
+  @Test
+  public void foundWhereOpenJavaFormatIsADependency() {
+    assertThat(OpenJavaFormat.isOnClasspath(getClass().getClassLoader())).isTrue();
+  }
 
-  boolean verbose();
+  @Test
+  public void missingWithoutOpenJavaFormat() {
+    // No parent: only the JDK's own classes, like a plugin realm without the dependency.
+    ClassLoader withoutOpenJavaFormat = new URLClassLoader(new URL[0], null);
 
-  String filesNamePattern();
+    assertThat(OpenJavaFormat.isOnClasspath(withoutOpenJavaFormat)).isFalse();
+  }
 
-  String filesPathPattern();
-
-  boolean writeReformattedFiles();
-
-  String processingLabel();
-
-  static FormattingConfigurationBuilder builder() {
-    return new FormattingConfigurationBuilder();
+  @Test
+  public void loadsTheImplementationOpenJavaFormatRegisters() {
+    assertThat(OpenJavaFormat.load().getClass().getName())
+        .isEqualTo("com.palantir.javaformat.java.FormatterServiceImpl");
   }
 }

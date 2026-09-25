@@ -1,0 +1,29 @@
+name: Submit dependency graph
+
+on:
+  push:
+    branches: [ 'main' ]
+
+permissions:
+  contents: write
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Submit Dependency Snapshot
+        uses: advanced-security/maven-dependency-submission-action@a64327a7329c9939cf675e458452febe1894a70c # v6.0.1
+        with:
+          # Only what ships goes into the graph: the compile and runtime scopes, passed on to
+          # depgraph-maven-plugin. open-java-format is provided, since the build that uses the plugin
+          # brings its own, and test dependencies never leave the repository. Without the filter the graph
+          # holds all of them, and Dependabot raises alerts for all of it.
+          maven-args: -Dscopes=compile,runtime

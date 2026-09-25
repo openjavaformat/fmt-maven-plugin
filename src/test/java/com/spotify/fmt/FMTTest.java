@@ -27,17 +27,16 @@
 package com.spotify.fmt;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.AdditionalMatchers.not;
 
 import java.io.File;
-import java.util.List;
-import org.apache.commons.io.IOUtils;
+import java.io.IOException;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.testing.MojoRule;
+import org.apache.maven.plugin.testing.resources.TestResources;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -47,6 +46,11 @@ public class FMTTest {
   private static final String CHECK = "check";
 
   @Rule public MojoRule mojoRule = new MojoRule();
+
+  // The mojos run on copies: the test projects keep upstream's google-java-format layout, which
+  // the format goal would otherwise rewrite in src/test/resources.
+  @Rule
+  public TestResources resources = new TestResources("src/test/resources", "target/test-projects");
 
   @Test
   public void noSource() throws Exception {
@@ -97,34 +101,6 @@ public class FMTTest {
   }
 
   @Test
-  public void withAllTypesOfSourcesWithAospStyleSpecified() throws Exception {
-    FMT fmt = loadMojo("simple_aosp", FORMAT);
-    fmt.execute();
-
-    assertThat(fmt.getResult().processedFiles()).hasSize(3);
-
-    /* Let's make sure we formatted with AOSP using 4 spaces */
-    List<String> lines =
-        IOUtils.readLines(
-            getClass().getResourceAsStream("/simple_aosp/src/main/java/HelloWorld1.java"));
-    assertThat(lines.get(3)).startsWith("    public");
-  }
-
-  @Test
-  public void withAllTypesOfSourcesWithGoogleStyleSpecified() throws Exception {
-    FMT fmt = loadMojo("simple_google", FORMAT);
-    fmt.execute();
-
-    assertThat(fmt.getResult().processedFiles()).hasSize(3);
-
-    /* Let's make sure we formatted with Google using 2 spaces */
-    List<String> lines =
-        IOUtils.readLines(
-            getClass().getResourceAsStream("/simple_google/src/main/java/HelloWorld1.java"));
-    assertThat(lines.get(3)).startsWith("  public");
-  }
-
-  @Test
   public void failOnUnknownFolderDoesNotFailWhenEverythingIsThere() throws Exception {
     FMT fmt = loadMojo("failonerrorwithsources", FORMAT);
     fmt.execute();
@@ -135,12 +111,6 @@ public class FMTTest {
   @Test(expected = MojoFailureException.class)
   public void failOnUnknownFolderFailsWhenAFolderIsMissing() throws Exception {
     FMT fmt = loadMojo("failonerrormissingsources", FORMAT);
-    fmt.execute();
-  }
-
-  @Test(expected = MojoFailureException.class)
-  public void failOnUnknownStyle() throws Exception {
-    FMT fmt = loadMojo("failonunknownstyle", FORMAT);
     fmt.execute();
   }
 
@@ -175,19 +145,9 @@ public class FMTTest {
     assertThat(fmt.getResult().processedFiles()).hasSize(1);
   }
 
-  @Test
-  public void forkNeverBeforeJDK16() throws Exception {
-    assumeFalse(isJavaVersionEqualOrHigherThan("16")); // Skip if forking is needed.
-    FMT fmt = loadMojo("fork_never_beforejdk16", FORMAT);
-    assertThat(fmt.shouldFork()).isFalse();
-    fmt.execute();
-
-    assertThat(fmt.getResult().processedFiles()).hasSize(1);
-  }
-
   @Test(
       expected =
-          IllegalAccessError.class) // Could stop throwing this if google-java-format is fixed.
+          IllegalAccessError.class) // open-java-format needs the javac exports that a fork adds.
   public void forkNeverAfterJDK16() throws Exception {
     assumeTrue(isJavaVersionEqualOrHigherThan("16"));
     FMT fmt = loadMojo("fork_never_afterjdk16", FORMAT);
@@ -322,8 +282,8 @@ public class FMTTest {
     return fmt;
   }
 
-  private File loadPom(String folderName) {
-    return new File("src/test/resources/", folderName);
+  private File loadPom(String folderName) throws IOException {
+    return resources.getBasedir(folderName);
   }
 
   private Log setupLogSpy(Mojo mojo) {

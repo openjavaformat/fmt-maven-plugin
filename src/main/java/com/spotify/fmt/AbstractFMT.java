@@ -26,7 +26,6 @@
 
 package com.spotify.fmt;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,20 +78,8 @@ public abstract class AbstractFMT extends AbstractMojo {
   @Parameter(defaultValue = "false", property = "skipTestSourceDirectory")
   private boolean skipTestSourceDirectory = false;
 
-  @Parameter(defaultValue = "false", property = "skipSortingImports")
-  private boolean skipSortingImports = false;
-
-  @Parameter(defaultValue = "false", property = "skipRemovingUnusedImports")
-  private boolean skipRemovingUnusedImports = false;
-
-  @Parameter(defaultValue = "true", property = "skipReflowingLongStrings")
-  private boolean skipReflowingLongStrings = true;
-
-  @Parameter(defaultValue = "google", property = "style")
-  private String style;
-
   /**
-   * Option to specify whether to run google-java-format in a fork or in-process. Can be {@code
+   * Option to specify whether to run open-java-format in a fork or in-process. Can be {@code
    * default}, {@code never} and {@code always}. Also adds JVM arguments when needed.
    *
    * <p>Specifying {@code default} (which is the default) will fork when JDK 16+ is detected.
@@ -109,7 +96,7 @@ public abstract class AbstractFMT extends AbstractMojo {
    * Whether to use the classpath from the java.class.path property when forking. Only intended for
    * use by unit tests.
    */
-  @VisibleForTesting boolean useDefaultClasspathWhenForking;
+  boolean useDefaultClasspathWhenForking;
 
   private FormattingResult result;
 
@@ -124,15 +111,11 @@ public abstract class AbstractFMT extends AbstractMojo {
       getLog().info("Skipping format check: project uses 'pom' packaging");
       return;
     }
-    if (skipSortingImports) {
-      getLog().info("Skipping sorting imports");
+    // Checked here, before any fork, so that a missing formatter fails with instructions rather
+    // than with a NoClassDefFoundError from the formatting JVM.
+    if (!OpenJavaFormat.isOnClasspath(getClass().getClassLoader())) {
+      throw new MojoFailureException(OpenJavaFormat.MISSING);
     }
-    if (skipRemovingUnusedImports) {
-        getLog().info("Skipping removing unused imports");
-      }
-    if (skipReflowingLongStrings) {
-        getLog().info("Skipping reflowing long strings");
-      }
     List<File> directoriesToFormat = new ArrayList<>();
     if (sourceDirectory.exists() && !skipSourceDirectory) {
       directoriesToFormat.add(sourceDirectory);
@@ -157,13 +140,9 @@ public abstract class AbstractFMT extends AbstractMojo {
         FormattingConfiguration.builder()
             .debug(getLog().isDebugEnabled())
             .directoriesToFormat(directoriesToFormat)
-            .style(style)
             .filesNamePattern(filesNamePattern)
             .filesPathPattern(filesPathPattern)
             .verbose(verbose)
-            .skipSortingImports(skipSortingImports)
-            .skipRemovingUnusedImports(skipRemovingUnusedImports)
-            .skipReflowingLongStrings(skipReflowingLongStrings)
             .writeReformattedFiles(shouldWriteReformattedFiles())
             .processingLabel(getProcessingLabel())
             .build();
@@ -195,7 +174,7 @@ public abstract class AbstractFMT extends AbstractMojo {
     postExecute(result);
   }
 
-  @VisibleForTesting
+  // Package-private for the tests.
   boolean shouldFork() {
     switch (forkMode) {
       case "default":

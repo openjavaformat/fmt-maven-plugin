@@ -17,6 +17,23 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>dev.openjavaformat</groupId>
+        <artifactId>fmt-maven-plugin</artifactId>
+        <version>@project.version@</version>
+        <dependencies>
+          <dependency>
+            <groupId>dev.openjavaformat</groupId>
+            <artifactId>open-java-format</artifactId>
+            <version>@open-java-format.version@</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
 </project>
 
 

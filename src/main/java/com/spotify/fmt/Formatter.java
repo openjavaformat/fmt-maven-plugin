@@ -26,15 +26,9 @@
 
 package com.spotify.fmt;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharSink;
-import com.google.common.io.CharSource;
-import com.google.googlejavaformat.java.ImportOrderer;
-import com.google.googlejavaformat.java.JavaFormatterOptions;
-import com.google.googlejavaformat.java.JavaFormatterOptions.Style;
-import com.google.googlejavaformat.java.RemoveUnusedImports;
-import com.google.googlejavaformat.java.StringWrapper;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.palantir.javaformat.java.FormatterService;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -60,11 +54,10 @@ class Formatter {
   }
 
   FormattingResult format() throws FormatterException {
-    JavaFormatterOptions.Style style = style();
-    com.google.googlejavaformat.java.Formatter formatter = getFormatter(style);
+    FormatterService formatter = OpenJavaFormat.load();
 
     for (File directoryToFormat : cfg.directoriesToFormat()) {
-      formatSourceFilesInDirectory(directoryToFormat, formatter, style);
+      formatSourceFilesInDirectory(directoryToFormat, formatter);
     }
 
     logNumberOfFilesProcessed();
@@ -75,8 +68,7 @@ class Formatter {
         .build();
   }
 
-  public void formatSourceFilesInDirectory(
-      File directory, com.google.googlejavaformat.java.Formatter formatter, Style style)
+  public void formatSourceFilesInDirectory(File directory, FormatterService formatter)
       throws FormatterException {
     if (!directory.isDirectory()) {
       log.info("Directory '" + directory + "' is not a directory. Skipping.");
@@ -92,7 +84,7 @@ class Formatter {
               .map(Path::toFile)
               .filter(fileNameFilter::accept)
               .filter(pathFilter::accept)
-              .map(file -> formatSourceFile(file, formatter, style))
+              .map(file -> formatSourceFile(file, formatter))
               .filter(r -> !r)
               .count();
 
@@ -103,26 +95,6 @@ class Formatter {
     } catch (IOException exception) {
       throw new FormatterException(exception.getMessage());
     }
-  }
-
-  private com.google.googlejavaformat.java.Formatter getFormatter(
-      JavaFormatterOptions.Style style) {
-    return new com.google.googlejavaformat.java.Formatter(
-        JavaFormatterOptions.builder().style(style).build());
-  }
-
-  private JavaFormatterOptions.Style style() throws FormatterException {
-    if ("aosp".equalsIgnoreCase(cfg.style())) {
-      log.debug("Using AOSP style");
-      return JavaFormatterOptions.Style.AOSP;
-    }
-    if ("google".equalsIgnoreCase(cfg.style())) {
-      log.debug("Using Google style");
-      return JavaFormatterOptions.Style.GOOGLE;
-    }
-    String message = "Unknown style '" + cfg.style() + "'. Expected 'google' or 'aosp'.";
-    log.error(message);
-    throw new FormatterException(message);
   }
 
   private FileFilter getFileNameFilter() {
@@ -139,8 +111,7 @@ class Formatter {
     return pathname -> pathname.isDirectory() || pathname.getPath().matches(cfg.filesPathPattern());
   }
 
-  private boolean formatSourceFile(
-      File file, com.google.googlejavaformat.java.Formatter formatter, Style style) {
+  private boolean formatSourceFile(File file, FormatterService formatter) {
     if (file.isDirectory()) {
       if (cfg.verbose()) {
         log.debug("File '" + file + "' is a directory. Skipping.");
@@ -152,23 +123,13 @@ class Formatter {
       log.debug("Formatting '" + file + "'.");
     }
 
-    CharSource source = com.google.common.io.Files.asCharSource(file, Charsets.UTF_8);
     try {
-      String input = source.read();
-      String formatted = formatter.formatSource(input);
-      if (!cfg.skipRemovingUnusedImports()) {
-          formatted = RemoveUnusedImports.removeUnusedImports(formatted);
-      }
-      if (!cfg.skipSortingImports()) {
-        formatted = ImportOrderer.reorderImports(formatted, style);
-      }
-      if (!cfg.skipReflowingLongStrings()) {
-          formatted = StringWrapper.wrap(formatted, formatter);
-      }
+      // Read and written like the open-java-format command line does it.
+      String input = new String(Files.readAllBytes(file.toPath()), UTF_8);
+      String formatted = formatter.formatSourceReflowStringsAndFixImports(input);
       if (!input.equals(formatted)) {
         if (cfg.writeReformattedFiles()) {
-          CharSink sink = com.google.common.io.Files.asCharSink(file, Charsets.UTF_8);
-          sink.write(formatted);
+          Files.write(file.toPath(), formatted.getBytes(UTF_8));
         }
         nonComplyingFiles.add(file.getAbsolutePath());
       }
@@ -176,7 +137,7 @@ class Formatter {
       if (processedFiles.size() % 100 == 0) {
         logNumberOfFilesProcessed();
       }
-    } catch (com.google.googlejavaformat.java.FormatterException | IOException e) {
+    } catch (com.palantir.javaformat.java.FormatterException | IOException e) {
       log.error("Failed to format file '" + file + "'.", e);
       return false;
     }

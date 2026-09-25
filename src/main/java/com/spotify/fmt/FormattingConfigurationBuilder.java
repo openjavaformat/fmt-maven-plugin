@@ -40,8 +40,6 @@ import java.util.List;
 final class FormattingConfigurationBuilder {
   private boolean debug;
 
-  private String style;
-
   private List<File> directoriesToFormat;
 
   private boolean verbose;
@@ -50,44 +48,30 @@ final class FormattingConfigurationBuilder {
 
   private String filesPathPattern;
 
-  private boolean skipSortingImports;
-
   private boolean writeReformattedFiles;
 
   private String processingLabel;
-
-  private boolean skipRemovingUnusedImports;
-
-  private boolean skipReflowingLongStrings;
 
   public FormattingConfigurationBuilder() {
   }
 
   private FormattingConfigurationBuilder(FormattingConfiguration v) {
     this.debug = v.debug();
-    this.style = v.style();
     List<File> _directoriesToFormat = v.directoriesToFormat();
     this.directoriesToFormat = (_directoriesToFormat == null) ? null : new ArrayList<File>(_directoriesToFormat);
     this.verbose = v.verbose();
     this.filesNamePattern = v.filesNamePattern();
     this.filesPathPattern = v.filesPathPattern();
-    this.skipSortingImports = v.skipSortingImports();
-    this.skipRemovingUnusedImports = v.skipRemovingUnusedImports();
-    this.skipReflowingLongStrings = v.skipReflowingLongStrings();
     this.writeReformattedFiles = v.writeReformattedFiles();
     this.processingLabel = v.processingLabel();
   }
 
   private FormattingConfigurationBuilder(FormattingConfigurationBuilder v) {
     this.debug = v.debug();
-    this.style = v.style();
     this.directoriesToFormat = new ArrayList<File>(v.directoriesToFormat());
     this.verbose = v.verbose();
     this.filesNamePattern = v.filesNamePattern();
     this.filesPathPattern = v.filesPathPattern();
-    this.skipSortingImports = v.skipSortingImports();
-    this.skipRemovingUnusedImports = v.skipRemovingUnusedImports();
-    this.skipReflowingLongStrings = v.skipReflowingLongStrings();
     this.writeReformattedFiles = v.writeReformattedFiles();
     this.processingLabel = v.processingLabel();
   }
@@ -98,18 +82,6 @@ final class FormattingConfigurationBuilder {
 
   public FormattingConfigurationBuilder debug(boolean debug) {
     this.debug = debug;
-    return this;
-  }
-
-  public String style() {
-    return style;
-  }
-
-  public FormattingConfigurationBuilder style(String style) {
-    if (style == null) {
-      throw new NullPointerException("style");
-    }
-    this.style = style;
     return this;
   }
 
@@ -208,15 +180,6 @@ final class FormattingConfigurationBuilder {
     return this;
   }
 
-  public boolean skipSortingImports() {
-    return skipSortingImports;
-  }
-
-  public FormattingConfigurationBuilder skipSortingImports(boolean skipSortingImports) {
-    this.skipSortingImports = skipSortingImports;
-    return this;
-  }
-
   public boolean writeReformattedFiles() {
     return writeReformattedFiles;
   }
@@ -238,27 +201,9 @@ final class FormattingConfigurationBuilder {
     return this;
   }
 
-  public boolean skipRemovingUnusedImports() {
-    return skipRemovingUnusedImports;
-  }
-
-  public FormattingConfigurationBuilder skipRemovingUnusedImports(boolean skipRemovingUnusedImports) {
-    this.skipRemovingUnusedImports = skipRemovingUnusedImports;
-    return this;
-  }
-
-  public boolean skipReflowingLongStrings() {
-    return skipReflowingLongStrings;
-  }
-
-  public FormattingConfigurationBuilder skipReflowingLongStrings(boolean skipReflowingLongStrings) {
-    this.skipReflowingLongStrings = skipReflowingLongStrings;
-    return this;
-  }
-
   public FormattingConfiguration build() {
     List<File> _directoriesToFormat = (directoriesToFormat != null) ? Collections.unmodifiableList(new ArrayList<File>(directoriesToFormat)) : Collections.<File>emptyList();
-    return new Value(debug, style, _directoriesToFormat, verbose, filesNamePattern, filesPathPattern, skipSortingImports, skipRemovingUnusedImports, skipReflowingLongStrings, writeReformattedFiles, processingLabel);
+    return new Value(debug, _directoriesToFormat, verbose, filesNamePattern, filesPathPattern, writeReformattedFiles, processingLabel);
   }
 
   public static FormattingConfigurationBuilder from(FormattingConfiguration v) {
@@ -272,8 +217,6 @@ final class FormattingConfigurationBuilder {
   private static final class Value implements FormattingConfiguration {
     private final boolean debug;
 
-    private final String style;
-
     private final List<File> directoriesToFormat;
 
     private final boolean verbose;
@@ -282,29 +225,17 @@ final class FormattingConfigurationBuilder {
 
     private final String filesPathPattern;
 
-    private final boolean skipSortingImports;
-
     private final boolean writeReformattedFiles;
 
     private final String processingLabel;
 
-    private final boolean skipRemovingUnusedImports;
-
-    private final boolean skipReflowingLongStrings;
-
-    private Value(boolean debug,String style,
+    private Value(boolean debug,
         List<File> directoriesToFormat,
         boolean verbose,
         String filesNamePattern,
         String filesPathPattern,
-        boolean skipSortingImports,
-        boolean skipRemovingUnusedImports,
-        boolean skipReflowingLongStrings,
         boolean writeReformattedFiles,
         String processingLabel) {
-      if (style == null) {
-        throw new NullPointerException("style");
-      }
       if (filesNamePattern == null) {
         throw new NullPointerException("filesNamePattern");
       }
@@ -315,14 +246,10 @@ final class FormattingConfigurationBuilder {
         throw new NullPointerException("processingLabel");
       }
       this.debug = debug;
-      this.style = style;
       this.directoriesToFormat = (directoriesToFormat != null) ? directoriesToFormat : Collections.<File>emptyList();
       this.verbose = verbose;
       this.filesNamePattern = filesNamePattern;
       this.filesPathPattern = filesPathPattern;
-      this.skipSortingImports = skipSortingImports;
-      this.skipRemovingUnusedImports = skipRemovingUnusedImports;
-      this.skipReflowingLongStrings = skipReflowingLongStrings;
       this.writeReformattedFiles = writeReformattedFiles;
       this.processingLabel = processingLabel;
     }
@@ -330,11 +257,6 @@ final class FormattingConfigurationBuilder {
     @Override
     public boolean debug() {
       return debug;
-    }
-
-    @Override
-    public String style() {
-      return style;
     }
 
     @Override
@@ -358,11 +280,6 @@ final class FormattingConfigurationBuilder {
     }
 
     @Override
-    public boolean skipSortingImports() {
-      return skipSortingImports;
-    }
-
-    @Override
     public boolean writeReformattedFiles() {
       return writeReformattedFiles;
     }
@@ -370,16 +287,6 @@ final class FormattingConfigurationBuilder {
     @Override
     public String processingLabel() {
       return processingLabel;
-    }
-
-    @Override
-    public boolean skipRemovingUnusedImports() {
-      return skipRemovingUnusedImports;
-    }
-
-    @Override
-    public boolean skipReflowingLongStrings() {
-      return skipReflowingLongStrings;
     }
 
     public FormattingConfigurationBuilder builder() {
@@ -398,9 +305,6 @@ final class FormattingConfigurationBuilder {
       if (debug != that.debug()) {
         return false;
       }
-      if (style != null ? !style.equals(that.style()) : that.style() != null) {
-        return false;
-      }
       if (directoriesToFormat != null ? !directoriesToFormat.equals(that.directoriesToFormat()) : that.directoriesToFormat() != null) {
         return false;
       }
@@ -411,15 +315,6 @@ final class FormattingConfigurationBuilder {
         return false;
       }
       if (filesPathPattern != null ? !filesPathPattern.equals(that.filesPathPattern()) : that.filesPathPattern() != null) {
-        return false;
-      }
-      if (skipSortingImports != that.skipSortingImports()) {
-        return false;
-      }
-      if (skipRemovingUnusedImports != that.skipRemovingUnusedImports()) {
-        return false;
-      }
-      if (skipReflowingLongStrings != that.skipReflowingLongStrings()) {
         return false;
       }
       if (writeReformattedFiles != that.writeReformattedFiles()) {
@@ -435,14 +330,10 @@ final class FormattingConfigurationBuilder {
     public int hashCode() {
       int result = 1;
       result = 31 * result + (this.debug ? 1231 : 1237);
-      result = 31 * result + (this.style != null ? this.style.hashCode() : 0);
       result = 31 * result + (this.directoriesToFormat != null ? this.directoriesToFormat.hashCode() : 0);
       result = 31 * result + (this.verbose ? 1231 : 1237);
       result = 31 * result + (this.filesNamePattern != null ? this.filesNamePattern.hashCode() : 0);
       result = 31 * result + (this.filesPathPattern != null ? this.filesPathPattern.hashCode() : 0);
-      result = 31 * result + (this.skipSortingImports ? 1231 : 1237);
-      result = 31 * result + (this.skipRemovingUnusedImports ? 1231 : 1237);
-      result = 31 * result + (this.skipReflowingLongStrings ? 1231 : 1237);
       result = 31 * result + (this.writeReformattedFiles ? 1231 : 1237);
       result = 31 * result + (this.processingLabel != null ? this.processingLabel.hashCode() : 0);
       return result;
@@ -452,14 +343,10 @@ final class FormattingConfigurationBuilder {
     public String toString() {
       return "FormattingConfiguration{" +
       "debug=" + debug +
-      ", style=" + style +
       ", directoriesToFormat=" + directoriesToFormat +
       ", verbose=" + verbose +
       ", filesNamePattern=" + filesNamePattern +
       ", filesPathPattern=" + filesPathPattern +
-      ", skipSortingImports=" + skipSortingImports +
-      ", skipRemovingUnusedImports=" + skipRemovingUnusedImports +
-      ", skipReflowingLongStrings=" + skipReflowingLongStrings +
       ", writeReformattedFiles=" + writeReformattedFiles +
       ", processingLabel=" + processingLabel +
       '}';
