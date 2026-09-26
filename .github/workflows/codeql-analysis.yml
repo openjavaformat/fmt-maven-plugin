@@ -22,8 +22,11 @@ jobs:
         include:
           - language: actions
             build-mode: none
+          # Manual: CodeQL analyzes what the build step below compiles, the plugin's main and test
+          # sources. The test projects in src/test/resources are Java files too, but javac never sees
+          # them, and with build-mode none their many copies of the same classes crowded the scan.
           - language: java-kotlin
-            build-mode: none
+            build-mode: manual
 
     steps:
       - name: Checkout repository
@@ -42,6 +45,7 @@ jobs:
           build-mode: ${{ matrix.build-mode }}
 
       - name: Build main and test sources for CodeQL
+        if: ${{ matrix.build-mode == 'manual' }}
         run: mvn --no-transfer-progress -B clean test-compile
 
       - name: Perform CodeQL Analysis
