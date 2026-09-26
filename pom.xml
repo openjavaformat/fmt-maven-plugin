@@ -78,6 +78,9 @@
     <maven.version>3.9.16</maven.version>
     <!-- The version the plugin is compiled and tested against. Builds that use the plugin name their own. -->
     <open-java-format.version>2.98.0.3</open-java-format.version>
+    <!-- What JReleaser does: deploy to Maven Central, unless the github-release profile below is active. -->
+    <jreleaser.central.deploy>ALWAYS</jreleaser.central.deploy>
+    <jreleaser.github.release>false</jreleaser.github.release>
   </properties>
 
   <dependencies>
@@ -224,8 +227,9 @@
       </plugin>
       <!--
         Signs what `mvn deploy -DaltDeploymentRepository=local::file:target/staging-deploy` staged and
-        publishes it to Maven Central. .github/workflows/release.yml runs it on a tag; with
-        -Djreleaser.dry.run=true it rehearses without uploading.
+        publishes it to Maven Central, and with the github-release profile opens the draft GitHub
+        release. .github/workflows/release.yml runs both on a tag; with -Djreleaser.dry.run=true they
+        rehearse without uploading.
       -->
       <plugin>
         <groupId>org.jreleaser</groupId>
@@ -236,12 +240,31 @@
             <project>
               <license>MIT</license>
             </project>
-            <!-- Maven Central only: no GitHub release. -->
+            <!--
+              A draft GitHub release on the tag, with the plugin jar, its signature, a checksum file and
+              the commits since the previous tag. The tag is pushed by hand and is the version, so the
+              release only attaches to it; it is published by hand after a look.
+            -->
             <release>
               <github>
-                <enabled>false</enabled>
+                <enabled>${jreleaser.github.release}</enabled>
+                <skipTag>true</skipTag>
+                <tagName>{{projectVersion}}</tagName>
+                <releaseName>{{projectVersion}}</releaseName>
+                <draft>true</draft>
+                <changelog>
+                  <formatted>ALWAYS</formatted>
+                  <format>- {{commitShortHash}} {{commitTitle}}</format>
+                </changelog>
               </github>
             </release>
+            <files>
+              <artifacts>
+                <artifact>
+                  <path>${project.build.directory}/${project.build.finalName}.jar</path>
+                </artifact>
+              </artifacts>
+            </files>
             <!--
               The key comes from JRELEASER_GPG_SECRET_KEY and JRELEASER_GPG_PASSPHRASE. There is no
               public key to check the signatures against, hence verify = false.
@@ -263,7 +286,7 @@
                     Maven Central to serve the files.
                   -->
                   <sonatype>
-                    <active>ALWAYS</active>
+                    <active>${jreleaser.central.deploy}</active>
                     <url>https://central.sonatype.com/api/v1/publisher</url>
                     <namespace>dev.openjavaformat</namespace>
                     <applyMavenCentralRules>true</applyMavenCentralRules>
@@ -298,4 +321,18 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <!--
+      The draft GitHub release, for the job in release.yml that runs once the plugin is on Maven
+      Central: `mvn -P github-release jreleaser:release` releases the jar in target/ and deploys nothing.
+    -->
+    <profile>
+      <id>github-release</id>
+      <properties>
+        <jreleaser.central.deploy>NEVER</jreleaser.central.deploy>
+        <jreleaser.github.release>true</jreleaser.github.release>
+      </properties>
+    </profile>
+  </profiles>
 </project>
