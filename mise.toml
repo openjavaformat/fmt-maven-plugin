@@ -15,10 +15,10 @@ env = { NO_COLOR = "1" }     # suppress gh's OSC-11 terminal-background probe
 run = """
 set -euo pipefail
 
-# BOT_PAT is consumed by update-pr-branch.yml and by the auto-merge step of
-# dependabot-automerge.yml, and it cannot be GITHUB_TOKEN: a push made with GITHUB_TOKEN starts no
-# workflow runs, so a branch would be brought up to date — or a pull request merged — and then
-# never re-checked.
+# BOT_PAT is consumed by update-pr-branch.yml, by the auto-merge step of dependabot-automerge.yml
+# and by follow-releases.yml, and it cannot be GITHUB_TOKEN: a push made with GITHUB_TOKEN starts no
+# workflow runs, so a branch would be brought up to date — or a pull request opened or merged — and
+# then never re-checked.
 #
 # The token needs these repository permissions:
 #   Pull requests  Write   PUT /repos/{owner}/{repo}/pulls/{n}/update-branch requires it
