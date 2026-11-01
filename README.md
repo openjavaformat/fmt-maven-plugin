@@ -38,7 +38,7 @@ To have your sources automatically formatted on each build, add to your pom.xml:
                     <dependency>
                         <groupId>dev.openjavaformat</groupId>
                         <artifactId>open-java-format</artifactId>
-                        <version>2.98.0.4</version>
+                        <version>21.0.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -68,7 +68,7 @@ If you prefer, you can only check formatting at build time using the `check` goa
                     <dependency>
                         <groupId>dev.openjavaformat</groupId>
                         <artifactId>open-java-format</artifactId>
-                        <version>2.98.0.4</version>
+                        <version>21.0.1</version>
                     </dependency>
                 </dependencies>
             </plugin>
