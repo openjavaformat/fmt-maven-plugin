@@ -1,0 +1,91 @@
+name: Follow releases
+
+# The README's examples name the latest release of open-java-format and of the plugin itself. Once
+# an hour this compares each with the latest GitHub release of openjavaformat/<artifact>. When a new
+# release is out, the README is changed on the branch follow-releases/<artifact>, and a pull request
+# for it is opened, approved and set to merge once build passes, the way Dependabot's are: main
+# takes no direct pushes.
+#
+# BOT_PAT pushes the branch, opens the pull request and turns on auto-merge: a push or a pull request
+# made with the workflow's own token starts no workflow runs, so build would never run on the pull
+# request, nor anything on main after the merge. The workflow's own token approves, because BOT_PAT's
+# account opened the pull request and cannot approve it.
+
+on:
+  schedule:
+    - cron: '17 * * * *' # not on the hour, when GitHub's schedule queue is longest
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  bump:
+    name: Bump ${{ matrix.artifact }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # check out the README
+      pull-requests: write # approve the pull request
+    strategy:
+      fail-fast: false
+      matrix:
+        artifact: [open-java-format, fmt-maven-plugin]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Open a pull request when a new release is out
+        shell: bash
+        env:
+          ARTIFACT: ${{ matrix.artifact }}
+          GH_TOKEN: ${{ github.token }}
+          BOT_PAT: ${{ secrets.BOT_PAT }}
+        run: |
+          # Every example names the version on the line after <artifactId>$ARTIFACT</artifactId>.
+          current=$(sed -n "/<artifactId>$ARTIFACT<\/artifactId>/{n;s/.*<version>\(.*\)<\/version>.*/\1/p;q}" README.md)
+          release=$(gh release view --repo "openjavaformat/$ARTIFACT" --json tagName,publishedAt)
+          latest=$(jq -r .tagName <<< "$release")
+          published=$(jq -r '.publishedAt[:10]' <<< "$release")
+          # The latest release is the one published last, and a fix for an older line can come out
+          # after a newer line started: only a higher version number is a bump.
+          newer=$(printf '%s\n' "$current" "$latest" | sort -V | tail -n 1)
+          if [ "$latest" = "$current" ] || [ "$newer" != "$latest" ]; then
+            echo "Already on $current; the latest release is $latest."
+            exit 0
+          fi
+
+          sed -i "/<artifactId>$ARTIFACT<\/artifactId>/{n;s/<version>.*<\/version>/<version>$latest<\/version>/}" README.md
+
+          # The branch lives as long as its pull request is open, and on after the pull request is
+          # closed unmerged. Either way, a branch with this README needs nothing more.
+          branch=follow-releases/$ARTIFACT
+          if git fetch --quiet --depth 1 origin "refs/heads/$branch" 2> /dev/null &&
+            git diff --quiet FETCH_HEAD -- README.md; then
+            echo "$branch names $latest already."
+            exit 0
+          fi
+          git diff
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --all --quiet --file - <<COMMIT
+          Show $ARTIFACT $latest in the README
+
+          The examples name $ARTIFACT $latest, which
+          openjavaformat/$ARTIFACT released on $published. Made by the
+          "$GITHUB_WORKFLOW" workflow:
+          $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          COMMIT
+          gh auth setup-git
+          GH_TOKEN=$BOT_PAT git push --force origin "HEAD:refs/heads/$branch"
+          title=$(git log -1 --format=%s)
+          body=$(git log -1 --format=%b)
+          number=$(gh pr list --head "$branch" --json number --jq '.[].number')
+          if [ -n "$number" ]; then
+            # Released again while the pull request was open: it now carries the newer version.
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$number" -f title="$title" -f body="$body" > /dev/null
+          else
+            url=$(GH_TOKEN=$BOT_PAT gh pr create --head "$branch" --title "$title" --body "$body")
+            gh pr review --approve "$url"
+            GH_TOKEN=$BOT_PAT gh pr merge --auto --squash "$url"
+          fi
